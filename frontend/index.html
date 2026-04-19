@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LexTrack-AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">⚖️</span>
+        <span class="logo-text">LexTrack-AI</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="chat">💬 Legal Chat</button>
+        <button class="nav-btn" data-tab="cases">📁 Cases</button>
+        <button class="nav-btn" data-tab="hearings">📅 Hearings</button>
+        <button class="nav-btn" data-tab="upload">📄 Documents</button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="status-dot"></span> AI Online
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+      <!-- CHAT TAB -->
+      <section class="tab-panel active" id="tab-chat">
+        <div class="chat-header">
+          <h1>Legal AI Assistant</h1>
+          <p>Powered by 7 specialized agents</p>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot">
+            <div class="message-bubble">
+              Hello! I am LexTrack-AI — a safety-first legal assistant
+              with 7 specialized agents. Ask me anything about Indian law,
+              contracts, filing procedures, or compliance.
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <textarea id="queryInput" placeholder="Ask a legal question..."
+                    rows="2" onkeydown="handleKey(event)"></textarea>
+          <button id="sendBtn" onclick="sendQuery()">Send ➤</button>
+        </div>
+      </section>
+
+      <!-- CASES TAB -->
+      <section class="tab-panel" id="tab-cases">
+        <div class="panel-header"><h1>Case Tracker</h1></div>
+        <div class="form-card">
+          <input id="caseTitle" placeholder="Case title" />
+          <textarea id="caseDesc" placeholder="Description" rows="2"></textarea>
+          <button onclick="createCase()">+ Add Case</button>
+        </div>
+        <div id="casesList" class="list-area"></div>
+      </section>
+
+      <!-- HEARINGS TAB -->
+      <section class="tab-panel" id="tab-hearings">
+        <div class="panel-header"><h1>Hearing Scheduler</h1></div>
+        <div class="form-card">
+          <input id="hCaseId"   placeholder="Case ID" type="number"/>
+          <input id="hTitle"    placeholder="Hearing title"/>
+          <input id="hDate"     placeholder="Date (e.g. 2026-05-20)"/>
+          <input id="hCourt"    placeholder="Court name"/>
+          <textarea id="hNotes" placeholder="Notes" rows="2"></textarea>
+          <button onclick="createHearing()">+ Schedule Hearing</button>
+        </div>
+        <div id="hearingsList" class="list-area"></div>
+      </section>
+
+      <!-- DOCUMENTS TAB -->
+      <section class="tab-panel" id="tab-upload">
+        <div class="panel-header"><h1>Document Analysis</h1></div>
+        <div class="form-card upload-card">
+          <p>Upload a legal document (PDF or TXT) for AI risk analysis.</p>
+          <input type="file" id="docFile" accept=".pdf,.txt"/>
+          <button onclick="uploadDocument()">Analyze Document</button>
+        </div>
+        <div id="docResult" class="doc-result"></div>
+      </section>
+
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
