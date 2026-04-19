@@ -1,14 +1,9 @@
 const API = "http://localhost:8000";
 
-// ─────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────
 let attachedFile = null;
 let notifications = [];
 
-// ─────────────────────────────────────────
-// TAB SWITCHING
-// ─────────────────────────────────────────
+
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -19,9 +14,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
   });
 });
 
-// ─────────────────────────────────────────
-// CHAT
-// ─────────────────────────────────────────
+
 function handleKey(e) {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendQuery(); }
 }
@@ -136,9 +129,7 @@ function getLocalCase(id) {
   return getLocalCases()[id] || null;
 }
 
-// ─────────────────────────────────────────
-// CASES
-// ─────────────────────────────────────────
+
 async function createCase() {
   const title       = document.getElementById("caseTitle").value.trim();
   const description = document.getElementById("caseDesc").value.trim();
@@ -403,9 +394,7 @@ Include:
   } catch(e) { alert("Could not generate brief."); }
 }
 
-// ─────────────────────────────────────────
-// ANALYSIS MODAL
-// ─────────────────────────────────────────
+
 function showAnalysisModal(caseData) {
   document.getElementById("modalTitle").textContent = `🤖 ${caseData.title || "Case Analysis"}`;
   document.getElementById("modalContent").innerHTML = `
@@ -465,9 +454,7 @@ function handleDrop(event) {
   }
 }
 
-// ─────────────────────────────────────────
-// NOTIFICATIONS
-// ─────────────────────────────────────────
+
 function addNotification(notif) {
   notifications.unshift({ ...notif, id: Date.now() });
   updateNotifBadge();
@@ -507,9 +494,7 @@ function renderNotifications() {
     </div>`).join("");
 }
 
-// ─────────────────────────────────────────
-// 24HR ALERT SYSTEM
-// ─────────────────────────────────────────
+
 function scheduleHearingAlert(caseData) {
   if (!caseData.hearingDate) return;
   const hDate   = new Date(caseData.hearingDate);
@@ -540,9 +525,7 @@ function fireHearingAlert(caseData) {
   loadCases(); // refresh to show urgent badge
 }
 
-// ─────────────────────────────────────────
-// BOOT — check existing cases on load
-// ─────────────────────────────────────────
+
 function bootHearingChecks() {
   const all = getLocalCases();
   Object.values(all).forEach(c => {
