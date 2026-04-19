@@ -4,29 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LexTrack-AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
+  <!-- NOTIFICATION PANEL -->
+  <div id="notifPanel" class="notif-panel hidden">
+    <div class="notif-header">
+      <span>🔔 Alerts</span>
+      <button onclick="closeNotif()">✕</button>
+    </div>
+    <div id="notifList" class="notif-list"></div>
+  </div>
 
+  <!-- NOTIFICATION BELL -->
+  <button class="notif-bell" onclick="toggleNotif()" id="notifBell">
+    🔔 <span id="notifCount" class="notif-badge hidden">0</span>
+  </button>
+
+  <div class="app">
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-logo">
         <span class="logo-icon">⚖️</span>
-        <span class="logo-text">LexTrack-AI</span>
+        <span class="logo-text">LexTrack<span class="logo-ai">AI</span></span>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-btn active" data-tab="chat">💬 Legal Chat</button>
-        <button class="nav-btn" data-tab="cases">📁 Cases</button>
-        <button class="nav-btn" data-tab="hearings">📅 Hearings</button>
-        <button class="nav-btn" data-tab="upload">📄 Documents</button>
+        <button class="nav-btn active" data-tab="chat">
+          <span class="nav-icon">💬</span> Legal Chat
+        </button>
+        <button class="nav-btn" data-tab="cases">
+          <span class="nav-icon">📁</span> Cases
+        </button>
+        <button class="nav-btn" data-tab="hearings">
+          <span class="nav-icon">📅</span> Hearings
+        </button>
+        <button class="nav-btn" data-tab="documents">
+          <span class="nav-icon">📄</span> Documents
+        </button>
       </nav>
       <div class="sidebar-footer">
         <span class="status-dot"></span> AI Online
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <main class="main">
 
       <!-- CHAT TAB -->
@@ -37,58 +60,109 @@
         </div>
         <div class="chat-messages" id="chatMessages">
           <div class="message bot">
+            <div class="avatar">⚖️</div>
             <div class="message-bubble">
-              Hello! I am LexTrack-AI — a safety-first legal assistant
-              with 7 specialized agents. Ask me anything about Indian law,
-              contracts, filing procedures, or compliance.
+              Hello! I am LexTrack-AI — a safety-first legal assistant with 7 specialized agents. Ask me anything about Indian law, contracts, filing procedures, or compliance.
             </div>
           </div>
         </div>
-        <div class="chat-input-area">
-          <textarea id="queryInput" placeholder="Ask a legal question..."
-                    rows="2" onkeydown="handleKey(event)"></textarea>
-          <button id="sendBtn" onclick="sendQuery()">Send ➤</button>
+        <!-- Claude-style input area with file upload -->
+        <div class="chat-input-wrapper">
+          <div id="attachedFiles" class="attached-files hidden"></div>
+          <div class="chat-input-area">
+            <button class="attach-btn" onclick="document.getElementById('chatFileInput').click()" title="Attach document">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <input type="file" id="chatFileInput" accept=".pdf,.txt" style="display:none" onchange="handleFileAttach(event)"/>
+            <textarea id="queryInput" placeholder="Ask a legal question..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button id="sendBtn" class="send-btn" onclick="sendQuery()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+            </button>
+          </div>
         </div>
       </section>
 
       <!-- CASES TAB -->
       <section class="tab-panel" id="tab-cases">
-        <div class="panel-header"><h1>Case Tracker</h1></div>
-        <div class="form-card">
-          <input id="caseTitle" placeholder="Case title" />
-          <textarea id="caseDesc" placeholder="Description" rows="2"></textarea>
-          <button onclick="createCase()">+ Add Case</button>
+        <div class="panel-header">
+          <h1>Case Tracker</h1>
+          <p>Register cases — AI auto-analyses key sections & required documents</p>
         </div>
-        <div id="casesList" class="list-area"></div>
+        <div class="panel-body">
+          <div class="form-card">
+            <div class="form-row">
+              <input id="caseTitle" placeholder="Case title *" />
+              <input id="caseType" placeholder="Case type (e.g. Criminal, Civil)" />
+            </div>
+            <textarea id="caseDesc" placeholder="Describe the case facts..." rows="3"></textarea>
+            <button class="primary-btn" onclick="createCase()">
+              + Register Case & Auto-Analyse
+            </button>
+          </div>
+          <div id="casesList" class="list-area"></div>
+        </div>
       </section>
 
       <!-- HEARINGS TAB -->
       <section class="tab-panel" id="tab-hearings">
-        <div class="panel-header"><h1>Hearing Scheduler</h1></div>
-        <div class="form-card">
-          <input id="hCaseId"   placeholder="Case ID" type="number"/>
-          <input id="hTitle"    placeholder="Hearing title"/>
-          <input id="hDate"     placeholder="Date (e.g. 2026-05-20)"/>
-          <input id="hCourt"    placeholder="Court name"/>
-          <textarea id="hNotes" placeholder="Notes" rows="2"></textarea>
-          <button onclick="createHearing()">+ Schedule Hearing</button>
+        <div class="panel-header">
+          <h1>Hearing Scheduler</h1>
+          <p>Schedule hearings — get notified 24hrs before with prep checklist</p>
         </div>
-        <div id="hearingsList" class="list-area"></div>
+        <div class="panel-body">
+          <div class="form-card">
+            <div class="form-row">
+              <input id="hCaseId" placeholder="Case ID" type="number"/>
+              <input id="hTitle" placeholder="Hearing title *"/>
+            </div>
+            <div class="form-row">
+              <input id="hDate" placeholder="Date & Time (e.g. 2026-05-20T10:00)" type="datetime-local"/>
+              <input id="hCourt" placeholder="Court name"/>
+            </div>
+            <textarea id="hNotes" placeholder="Notes..." rows="2"></textarea>
+            <button class="primary-btn" onclick="createHearing()">+ Schedule Hearing</button>
+          </div>
+          <div id="hearingsList" class="list-area"></div>
+        </div>
       </section>
 
       <!-- DOCUMENTS TAB -->
-      <section class="tab-panel" id="tab-upload">
-        <div class="panel-header"><h1>Document Analysis</h1></div>
-        <div class="form-card upload-card">
-          <p>Upload a legal document (PDF or TXT) for AI risk analysis.</p>
-          <input type="file" id="docFile" accept=".pdf,.txt"/>
-          <button onclick="uploadDocument()">Analyze Document</button>
+      <section class="tab-panel" id="tab-documents">
+        <div class="panel-header">
+          <h1>Document Analysis</h1>
+          <p>Upload legal documents for AI risk analysis</p>
         </div>
-        <div id="docResult" class="doc-result"></div>
+        <div class="panel-body">
+          <div class="upload-zone" id="uploadZone"
+               ondragover="event.preventDefault(); this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')"
+               ondrop="handleDrop(event)">
+            <div class="upload-icon">📂</div>
+            <p>Drag & drop a PDF or TXT file here</p>
+            <span>or</span>
+            <label class="upload-label">
+              Browse File
+              <input type="file" id="docFile" accept=".pdf,.txt" onchange="uploadDocument()" style="display:none"/>
+            </label>
+          </div>
+          <div id="docResult" class="doc-result hidden"></div>
+        </div>
       </section>
 
     </main>
   </div>
+
+  <!-- CASE ANALYSIS MODAL -->
+  <div id="analysisModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>🤖 Case Analysis</span>
+        <button onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalContent" class="modal-content"></div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
