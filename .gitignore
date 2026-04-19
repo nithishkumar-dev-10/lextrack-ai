@@ -28,3 +28,5 @@ Thumbs.db
 # Build artifacts
 dist/
 *.egg-info/
+
+.env.env
