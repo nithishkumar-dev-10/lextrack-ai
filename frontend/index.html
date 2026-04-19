@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <!-- NOTIFICATION PANEL -->
   <div id="notifPanel" class="notif-panel hidden">
     <div class="notif-header">
@@ -24,6 +25,7 @@
   </button>
 
   <div class="app">
+
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-logo">
@@ -37,9 +39,6 @@
         <button class="nav-btn" data-tab="cases">
           <span class="nav-icon">📁</span> Cases
         </button>
-        <button class="nav-btn" data-tab="hearings">
-          <span class="nav-icon">📅</span> Hearings
-        </button>
         <button class="nav-btn" data-tab="documents">
           <span class="nav-icon">📄</span> Documents
         </button>
@@ -52,7 +51,7 @@
     <!-- MAIN -->
     <main class="main">
 
-      <!-- CHAT TAB -->
+      <!-- ── CHAT TAB ── -->
       <section class="tab-panel active" id="tab-chat">
         <div class="chat-header">
           <h1>Legal AI Assistant</h1>
@@ -66,67 +65,60 @@
             </div>
           </div>
         </div>
-        <!-- Claude-style input area with file upload -->
         <div class="chat-input-wrapper">
           <div id="attachedFiles" class="attached-files hidden"></div>
           <div class="chat-input-area">
             <button class="attach-btn" onclick="document.getElementById('chatFileInput').click()" title="Attach document">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+              </svg>
             </button>
             <input type="file" id="chatFileInput" accept=".pdf,.txt" style="display:none" onchange="handleFileAttach(event)"/>
-            <textarea id="queryInput" placeholder="Ask a legal question..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <textarea id="queryInput" placeholder="Ask a legal question..." rows="1"
+                      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
             <button id="sendBtn" class="send-btn" onclick="sendQuery()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
+              </svg>
             </button>
           </div>
         </div>
       </section>
 
-      <!-- CASES TAB -->
+      <!-- ── CASES TAB ── -->
       <section class="tab-panel" id="tab-cases">
         <div class="panel-header">
           <h1>Case Tracker</h1>
-          <p>Register cases — AI auto-analyses key sections & required documents</p>
+          <p>Register cases with hearing dates — AI auto-analyses and alerts you 24hrs before</p>
         </div>
         <div class="panel-body">
+
+          <!-- Register new case -->
           <div class="form-card">
             <div class="form-row">
               <input id="caseTitle" placeholder="Case title *" />
-              <input id="caseType" placeholder="Case type (e.g. Criminal, Civil)" />
+              <input id="caseType"  placeholder="Case type (e.g. Criminal, Civil)" />
             </div>
             <textarea id="caseDesc" placeholder="Describe the case facts..." rows="3"></textarea>
+
+            <!-- Hearing date inside the form -->
+            <div class="hearing-row">
+              <label class="hearing-label">📅 Hearing Date & Time</label>
+              <input id="caseHearingDate" type="datetime-local" />
+              <input id="caseCourt" placeholder="Court name (optional)" />
+            </div>
+
             <button class="primary-btn" onclick="createCase()">
               + Register Case & Auto-Analyse
             </button>
           </div>
+
+          <!-- Cases list -->
           <div id="casesList" class="list-area"></div>
         </div>
       </section>
 
-      <!-- HEARINGS TAB -->
-      <section class="tab-panel" id="tab-hearings">
-        <div class="panel-header">
-          <h1>Hearing Scheduler</h1>
-          <p>Schedule hearings — get notified 24hrs before with prep checklist</p>
-        </div>
-        <div class="panel-body">
-          <div class="form-card">
-            <div class="form-row">
-              <input id="hCaseId" placeholder="Case ID" type="number"/>
-              <input id="hTitle" placeholder="Hearing title *"/>
-            </div>
-            <div class="form-row">
-              <input id="hDate" placeholder="Date & Time (e.g. 2026-05-20T10:00)" type="datetime-local"/>
-              <input id="hCourt" placeholder="Court name"/>
-            </div>
-            <textarea id="hNotes" placeholder="Notes..." rows="2"></textarea>
-            <button class="primary-btn" onclick="createHearing()">+ Schedule Hearing</button>
-          </div>
-          <div id="hearingsList" class="list-area"></div>
-        </div>
-      </section>
-
-      <!-- DOCUMENTS TAB -->
+      <!-- ── DOCUMENTS TAB ── -->
       <section class="tab-panel" id="tab-documents">
         <div class="panel-header">
           <h1>Document Analysis</h1>
@@ -152,11 +144,11 @@
     </main>
   </div>
 
-  <!-- CASE ANALYSIS MODAL -->
+  <!-- CASE ANALYSIS / DETAIL MODAL -->
   <div id="analysisModal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-header">
-        <span>🤖 Case Analysis</span>
+        <span id="modalTitle">🤖 Case Analysis</span>
         <button onclick="closeModal()">✕</button>
       </div>
       <div id="modalContent" class="modal-content"></div>

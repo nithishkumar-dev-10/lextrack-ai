@@ -1,34 +1,29 @@
-const API = "http://localhost:8000"; // change to Render URL after deployment
+const API = "http://localhost:8000";
 
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // STATE
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 let attachedFile = null;
 let notifications = [];
-let hearingCheckInterval = null;
 
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // TAB SWITCHING
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
-    if (btn.dataset.tab === "cases")    loadCases();
-    if (btn.dataset.tab === "hearings") loadHearings();
+    if (btn.dataset.tab === "cases") loadCases();
   });
 });
 
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // CHAT
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 function handleKey(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendQuery();
-  }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendQuery(); }
 }
 
 function autoResize(el) {
@@ -51,9 +46,8 @@ function handleFileAttach(event) {
 
 function removeAttachment() {
   attachedFile = null;
-  const container = document.getElementById("attachedFiles");
-  container.classList.add("hidden");
-  container.innerHTML = "";
+  document.getElementById("attachedFiles").classList.add("hidden");
+  document.getElementById("attachedFiles").innerHTML = "";
   document.getElementById("chatFileInput").value = "";
 }
 
@@ -62,42 +56,37 @@ async function sendQuery() {
   const query = input.value.trim();
   if (!query && !attachedFile) return;
 
-  const displayText = query || `Analysing: ${attachedFile?.name}`;
-  addMessage(displayText, "user");
+  addMessage(query || `Analysing: ${attachedFile?.name}`, "user");
   input.value = "";
   input.style.height = "auto";
   document.getElementById("sendBtn").disabled = true;
 
-  // Show typing indicator
   const thinkingId = "thinking-" + Date.now();
   addTypingIndicator(thinkingId);
 
   try {
-    let response, data;
-
+    let data;
     if (attachedFile) {
-      // Send file + optional query
       const form = new FormData();
       form.append("file", attachedFile);
-      response = await fetch(`${API}/documents/analyze`, { method: "POST", body: form });
-      data = await response.json();
+      const res = await fetch(`${API}/documents/analyze`, { method: "POST", body: form });
+      data = await res.json();
       removeTypingIndicator(thinkingId);
-      const content = `📄 ${data.filename}\n\n${data.analysis}` + (data.warning ? `\n\n⚠️ ${data.warning}` : "");
-      addMessage(content, "bot", data.agent_used || "document", data.confidence, data.warning);
+      addMessage(`📄 ${data.filename}\n\n${data.analysis}${data.warning ? `\n\n⚠️ ${data.warning}` : ""}`,
+        "bot", data.agent_used || "document", data.confidence, data.warning);
       removeAttachment();
     } else {
-      response = await fetch(`${API}/chat/query`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${API}/chat/query`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query })
       });
-      data = await response.json();
+      data = await res.json();
       removeTypingIndicator(thinkingId);
       addMessage(data.response, "bot", data.agent_used, data.confidence, data.warning);
     }
   } catch (err) {
     removeTypingIndicator(thinkingId);
-    addMessage("⚠️ Could not reach the backend. Is it running on port 8000?", "bot");
+    addMessage("⚠️ Could not reach backend. Is it running on port 8000?", "bot");
   }
 
   document.getElementById("sendBtn").disabled = false;
@@ -108,19 +97,13 @@ function addMessage(text, role, agent, confidence, warning) {
   const div = document.createElement("div");
   div.className = `message ${role}`;
 
-  const avatar = role === "bot"
-    ? `<div class="avatar">⚖️</div>`
-    : `<div class="avatar">👤</div>`;
-
+  const avatar = `<div class="avatar">${role === "bot" ? "⚖️" : "👤"}</div>`;
   let html = `${avatar}<div class="message-bubble">${text}`;
-
   if (agent && confidence !== undefined) {
     const cls = confidence >= 75 ? "green" : confidence >= 50 ? "yellow" : "red";
     html += `<br/><span class="meta-tag ${cls}">Agent: ${agent} | Confidence: ${confidence}%</span>`;
   }
-  if (warning) {
-    html += `<div class="warning-box">⚠️ ${warning}</div>`;
-  }
+  if (warning) html += `<div class="warning-box">⚠️ ${warning}</div>`;
   html += `</div>`;
   div.innerHTML = html;
   box.appendChild(div);
@@ -130,28 +113,39 @@ function addMessage(text, role, agent, confidence, warning) {
 function addTypingIndicator(id) {
   const box = document.getElementById("chatMessages");
   const div = document.createElement("div");
-  div.className = "message bot";
-  div.id = id;
-  div.innerHTML = `
-    <div class="avatar">⚖️</div>
-    <div class="message-bubble">
-      <div class="typing-dots"><span></span><span></span><span></span></div>
-    </div>`;
+  div.className = "message bot"; div.id = id;
+  div.innerHTML = `<div class="avatar">⚖️</div><div class="message-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
 
-function removeTypingIndicator(id) {
-  document.getElementById(id)?.remove();
+function removeTypingIndicator(id) { document.getElementById(id)?.remove(); }
+
+// ─────────────────────────────────────────
+// LOCAL STORAGE HELPERS
+// ─────────────────────────────────────────
+function getLocalCases() {
+  return JSON.parse(localStorage.getItem("lextrack_cases") || "{}");
+}
+function saveLocalCase(data) {
+  const all = getLocalCases();
+  all[data.id] = data;
+  localStorage.setItem("lextrack_cases", JSON.stringify(all));
+}
+function getLocalCase(id) {
+  return getLocalCases()[id] || null;
 }
 
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // CASES
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 async function createCase() {
   const title       = document.getElementById("caseTitle").value.trim();
   const description = document.getElementById("caseDesc").value.trim();
   const caseType    = document.getElementById("caseType").value.trim();
+  const hearingDate = document.getElementById("caseHearingDate").value;
+  const court       = document.getElementById("caseCourt").value.trim();
+
   if (!title) return alert("Enter a case title");
 
   const btn = document.querySelector("#tab-cases .primary-btn");
@@ -159,153 +153,269 @@ async function createCase() {
   btn.disabled = true;
 
   try {
-    // 1. Create the case
+    // 1. Register case in backend
     const res = await fetch(`${API}/cases/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description: description || caseType })
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description: `${caseType ? "["+caseType+"] " : ""}${description}` })
     });
     const newCase = await res.json();
 
-    // 2. Auto-analyse immediately
-    const analysisQuery = `Analyse this legal case and provide:
-1. Relevant IPC/BNS sections
-2. Required documents list
-3. Key points and strategy
-4. Important deadlines
+    // 2. Schedule hearing if date provided
+    let hearingId = null;
+    if (hearingDate) {
+      try {
+        const hRes = await fetch(`${API}/hearings/`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            case_id: newCase.id, title: `Hearing — ${title}`,
+            hearing_date: hearingDate, court: court || null, notes: ""
+          })
+        });
+        const hData = await hRes.json();
+        hearingId = hData.id;
+      } catch(e) { /* hearing endpoint may not exist, store locally */ }
+    }
 
+    // 3. Auto-analyse via AI
+    const analysisQuery = `Analyse this legal case thoroughly:
 Case Title: ${title}
 Case Type: ${caseType || "General"}
-Facts: ${description || "No additional facts provided"}`;
+Facts: ${description || "No additional facts provided"}
+
+Provide:
+1. Relevant IPC/BNS sections with brief explanation
+2. Required documents checklist
+3. Key legal points and strategy
+4. Important deadlines to watch
+5. Potential risks`;
 
     const aiRes = await fetch(`${API}/chat/query`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: analysisQuery })
     });
     const aiData = await aiRes.json();
 
-    // 3. Store analysis in case (store locally for now)
-    const caseData = {
-      id: newCase.id,
-      title,
-      caseType,
-      description,
+    // 4. Save everything locally
+    const localData = {
+      id: newCase.id, title, caseType, description, court,
       status: newCase.status || "open",
+      hearingDate: hearingDate || null,
+      hearingId,
       analysis: aiData.response,
       confidence: aiData.confidence,
       analysedAt: new Date().toISOString()
     };
-    saveCaseAnalysis(caseData);
+    saveLocalCase(localData);
 
-    // 4. Show modal with analysis
-    showAnalysisModal(caseData);
+    // 5. Show analysis modal
+    showAnalysisModal(localData);
 
-    // 5. Add notification
+    // 6. Notify
     addNotification({
-      type: "analysis",
-      title: `✅ Case #${newCase.id} Analysed`,
-      body: `"${title}" — AI analysis complete. Key sections and documents identified.`,
+      type: "success",
+      title: `✅ Case #${newCase.id} Registered & Analysed`,
+      body: `"${title}" — AI analysis complete.${hearingDate ? ` Hearing: ${new Date(hearingDate).toLocaleString()}` : ""}`,
       time: new Date()
     });
 
+    // 7. Schedule 24hr check if hearing date set
+    if (hearingDate) scheduleHearingAlert(localData);
+
     // Clear form
-    document.getElementById("caseTitle").value = "";
-    document.getElementById("caseDesc").value = "";
-    document.getElementById("caseType").value = "";
+    ["caseTitle","caseDesc","caseType","caseHearingDate","caseCourt"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
 
     loadCases();
-  } catch (err) {
+  } catch(err) {
     alert("Error creating case. Is backend running?");
+    console.error(err);
   }
 
   btn.textContent = "+ Register Case & Auto-Analyse";
   btn.disabled = false;
 }
 
-function saveCaseAnalysis(caseData) {
-  const all = JSON.parse(localStorage.getItem("lextrack_analyses") || "{}");
-  all[caseData.id] = caseData;
-  localStorage.setItem("lextrack_analyses", JSON.stringify(all));
-}
-
-function getCaseAnalysis(caseId) {
-  const all = JSON.parse(localStorage.getItem("lextrack_analyses") || "{}");
-  return all[caseId] || null;
-}
-
 async function loadCases() {
+  const el = document.getElementById("casesList");
   try {
     const res   = await fetch(`${API}/cases/`);
     const cases = await res.json();
-    const el    = document.getElementById("casesList");
+    const local = getLocalCases();
 
     if (!cases.length) {
-      el.innerHTML = "<p style='color:var(--dim);padding:12px;font-size:13px'>No cases registered yet.</p>";
+      el.innerHTML = "<p style='color:var(--dim);padding:4px;font-size:13px'>No cases registered yet.</p>";
       return;
     }
 
     el.innerHTML = cases.map(c => {
-      const analysis = getCaseAnalysis(c.id);
-      const hasAnalysis = !!analysis;
+      const ld       = local[c.id] || {};
+      const hDate    = ld.hearingDate ? new Date(ld.hearingDate) : null;
+      const now      = new Date();
+      const diffH    = hDate ? (hDate - now) / 36e5 : null;
+      const isUrgent = diffH !== null && diffH > 0 && diffH <= 24;
+      const isPast   = diffH !== null && diffH <= 0;
+
       return `
-        <div class="list-item">
-          <div class="list-item-header">
-            <h3>📁 #${c.id} — ${c.title}</h3>
-            <span class="badge ${c.status === 'open' ? 'open' : 'pending'}">${c.status}</span>
+        <div class="case-card ${isUrgent ? 'urgent' : ''}">
+          <!-- Top section -->
+          <div class="case-card-top">
+            <div class="case-info">
+              <h3>${isUrgent ? "🚨 " : "📁 "}#${c.id} — ${c.title}</h3>
+              <p>${ld.caseType ? `[${ld.caseType}] ` : ""}${c.description || "No description"}</p>
+            </div>
+            <span class="badge ${isUrgent ? 'urgent' : isPast ? 'done' : 'open'}">
+              ${isUrgent ? "< 24hrs" : isPast && hDate ? "Past" : c.status}
+            </span>
           </div>
-          <p>${c.description || "No description"}</p>
-          ${hasAnalysis
-            ? `<button class="analyse-btn" onclick="showAnalysisModal(getCaseAnalysis(${c.id}))">📊 View Analysis</button>`
-            : `<button class="analyse-btn" onclick="reAnalyseCase(${c.id}, '${c.title}', '${(c.description||'').replace(/'/g,"\\'")}')">🔄 Analyse Now</button>`
-          }
+
+          <!-- Hearing strip -->
+          ${hDate ? `
+          <div class="hearing-strip ${isUrgent ? 'urgent-strip' : ''}">
+            <span class="hearing-strip-info">
+              📅 <strong>${hDate.toLocaleString()}</strong>
+              ${ld.court ? ` &nbsp;|&nbsp; 🏛 ${ld.court}` : ""}
+              ${isUrgent ? " &nbsp;|&nbsp; ⚡ HEARING SOON" : ""}
+            </span>
+            <button class="action-btn" onclick="showSetHearing(${c.id})">✏️ Change</button>
+          </div>` : `
+          <div class="hearing-strip">
+            <span class="hearing-strip-info" style="color:var(--dim)">No hearing date set</span>
+            <button class="action-btn" onclick="showSetHearing(${c.id})">+ Set Hearing Date</button>
+          </div>`}
+
+          <!-- Set hearing inline form (hidden by default) -->
+          <div class="set-hearing-form hidden" id="hearing-form-${c.id}">
+            <input type="datetime-local" id="hdate-${c.id}" style="color-scheme:dark"/>
+            <input placeholder="Court name" id="hcourt-${c.id}" style="max-width:160px"/>
+            <button onclick="saveHearingDate(${c.id}, '${c.title.replace(/'/g,"\\'")}')">Save</button>
+          </div>
+
+          <!-- Actions -->
+          <div class="case-actions">
+            ${ld.analysis
+              ? `<button class="action-btn" onclick="showAnalysisModal(getLocalCase(${c.id}))">📊 View Analysis</button>`
+              : `<button class="action-btn" onclick="reAnalyse(${c.id}, '${c.title.replace(/'/g,"\\'")}', '${(c.description||'').replace(/'/g,"\\'")}')">🔄 Analyse</button>`
+            }
+            ${isUrgent
+              ? `<button class="action-btn" style="border-color:var(--red);color:var(--red)" onclick="get24hrBrief(${c.id})">🔔 Get 24hr Brief</button>`
+              : ""
+            }
+          </div>
         </div>`;
     }).join("");
-  } catch (e) {
-    document.getElementById("casesList").innerHTML =
-      "<p style='color:var(--dim);padding:12px;font-size:13px'>Could not load cases.</p>";
+  } catch(e) {
+    el.innerHTML = "<p style='color:var(--dim);padding:4px;font-size:13px'>Could not load cases.</p>";
   }
 }
 
-async function reAnalyseCase(id, title, description) {
-  const btn = event.target;
-  btn.textContent = "Analysing...";
-  btn.disabled = true;
+function showSetHearing(caseId) {
+  const form = document.getElementById(`hearing-form-${caseId}`);
+  form.classList.toggle("hidden");
+}
 
+async function saveHearingDate(caseId, caseTitle) {
+  const dateVal = document.getElementById(`hdate-${caseId}`).value;
+  const court   = document.getElementById(`hcourt-${caseId}`).value.trim();
+  if (!dateVal) return alert("Pick a date and time");
+
+  // Update local storage
+  const ld = getLocalCase(caseId) || { id: caseId, title: caseTitle };
+  ld.hearingDate = dateVal;
+  ld.court       = court;
+  saveLocalCase(ld);
+
+  // Try to create/update hearing in backend
   try {
-    const query = `Analyse this legal case:
-Case Title: ${title}
+    await fetch(`${API}/hearings/`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        case_id: caseId, title: `Hearing — ${caseTitle}`,
+        hearing_date: dateVal, court: court || null, notes: ""
+      })
+    });
+  } catch(e) { /* backend may not support, local is enough */ }
+
+  // Schedule 24hr alert
+  scheduleHearingAlert(ld);
+
+  addNotification({
+    type: "success",
+    title: `📅 Hearing Set — Case #${caseId}`,
+    body: `"${caseTitle}" hearing on ${new Date(dateVal).toLocaleString()}`,
+    time: new Date()
+  });
+
+  document.getElementById(`hearing-form-${caseId}`).classList.add("hidden");
+  loadCases();
+}
+
+async function reAnalyse(caseId, title, description) {
+  const query = `Analyse this legal case:
+Title: ${title}
 Facts: ${description || "No facts provided"}
 Provide: relevant IPC/BNS sections, required documents, key points.`;
 
+  try {
     const res  = await fetch(`${API}/chat/query`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query })
     });
     const data = await res.json();
-    const caseData = { id, title, description, analysis: data.response, confidence: data.confidence, analysedAt: new Date().toISOString() };
-    saveCaseAnalysis(caseData);
-    showAnalysisModal(caseData);
+    const ld   = getLocalCase(caseId) || { id: caseId, title };
+    ld.analysis    = data.response;
+    ld.confidence  = data.confidence;
+    ld.analysedAt  = new Date().toISOString();
+    saveLocalCase(ld);
+    showAnalysisModal(ld);
     loadCases();
-  } catch (e) {
-    alert("Analysis failed.");
-  }
+  } catch(e) { alert("Analysis failed."); }
 }
 
+async function get24hrBrief(caseId) {
+  const ld = getLocalCase(caseId);
+  if (!ld) return;
+
+  const query = `Generate a 24-hour hearing preparation brief:
+Case: ${ld.title}
+Hearing: ${ld.hearingDate ? new Date(ld.hearingDate).toLocaleString() : "Soon"}
+Court: ${ld.court || "TBD"}
+${ld.analysis ? `Previous Analysis:\n${ld.analysis}` : ""}
+
+Include:
+1. Complete documents checklist to bring
+2. Key legal arguments to make
+3. Last-minute preparation steps (48hr, 24hr, day-of)
+4. What NOT to forget`;
+
+  try {
+    const res  = await fetch(`${API}/chat/query`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    showAnalysisModal({
+      title: `24hr Brief — ${ld.title}`,
+      analysis: data.response,
+      confidence: data.confidence,
+      analysedAt: new Date().toISOString()
+    });
+  } catch(e) { alert("Could not generate brief."); }
+}
+
+// ─────────────────────────────────────────
+// ANALYSIS MODAL
+// ─────────────────────────────────────────
 function showAnalysisModal(caseData) {
+  document.getElementById("modalTitle").textContent = `🤖 ${caseData.title || "Case Analysis"}`;
   document.getElementById("modalContent").innerHTML = `
     <div class="modal-section">
-      <h3>📁 Case</h3>
-      <p><strong>${caseData.title}</strong>${caseData.caseType ? ` — ${caseData.caseType}` : ""}</p>
-    </div>
-    <div class="modal-section">
       <h3>🤖 AI Analysis</h3>
-      <p style="white-space:pre-wrap;line-height:1.7">${caseData.analysis || "No analysis available."}</p>
+      <p>${caseData.analysis || "No analysis available."}</p>
     </div>
     ${caseData.confidence ? `
     <div class="modal-section">
-      <h3>📊 Confidence</h3>
+      <h3>📊 Confidence Score</h3>
       <p>${caseData.confidence}%</p>
     </div>` : ""}
     ${caseData.analysedAt ? `
@@ -321,127 +431,9 @@ function closeModal() {
   document.getElementById("analysisModal").classList.add("hidden");
 }
 
-// ─────────────────────────────────────────────────────
-// HEARINGS
-// ─────────────────────────────────────────────────────
-async function createHearing() {
-  const body = {
-    case_id:      parseInt(document.getElementById("hCaseId").value) || null,
-    title:        document.getElementById("hTitle").value.trim(),
-    hearing_date: document.getElementById("hDate").value,
-    court:        document.getElementById("hCourt").value.trim(),
-    notes:        document.getElementById("hNotes").value.trim(),
-  };
-  if (!body.title || !body.hearing_date) return alert("Fill title and date");
-
-  try {
-    await fetch(`${API}/hearings/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    // Clear form
-    ["hCaseId","hTitle","hDate","hCourt","hNotes"].forEach(id => {
-      document.getElementById(id).value = "";
-    });
-
-    addNotification({
-      type: "hearing",
-      title: "📅 Hearing Scheduled",
-      body: `"${body.title}" on ${new Date(body.hearing_date).toLocaleString()}`,
-      time: new Date()
-    });
-
-    loadHearings();
-  } catch(e) {
-    alert("Could not schedule hearing.");
-  }
-}
-
-async function loadHearings() {
-  try {
-    const res      = await fetch(`${API}/hearings/`);
-    const hearings = await res.json();
-    const el       = document.getElementById("hearingsList");
-
-    if (!hearings.length) {
-      el.innerHTML = "<p style='color:var(--dim);padding:12px;font-size:13px'>No hearings scheduled.</p>";
-      return;
-    }
-
-    const now = new Date();
-    el.innerHTML = hearings.map(h => {
-      const hDate     = new Date(h.hearing_date);
-      const diffMs    = hDate - now;
-      const diffHours = diffMs / (1000 * 60 * 60);
-      const isUrgent  = diffHours > 0 && diffHours <= 24;
-      const isPast    = diffMs < 0;
-
-      return `
-        <div class="list-item ${isUrgent ? 'urgent' : ''}">
-          <div class="list-item-header">
-            <h3>${isUrgent ? "🚨 " : "📅 "}${h.title}</h3>
-            <span class="badge ${isUrgent ? 'urgent' : isPast ? 'pending' : 'open'}">
-              ${isUrgent ? "< 24hrs" : isPast ? "Past" : "Upcoming"}
-            </span>
-          </div>
-          <p>
-            🕐 ${hDate.toLocaleString()} &nbsp;|&nbsp;
-            🏛 ${h.court || "TBD"} &nbsp;|&nbsp;
-            📁 Case #${h.case_id || "—"}
-          </p>
-          ${h.notes ? `<p style="margin-top:4px">📝 ${h.notes}</p>` : ""}
-          ${isUrgent ? `<button class="analyse-btn" style="border-color:var(--red);color:var(--red)" onclick="get24hrBrief('${h.title}', ${h.case_id || 'null'})">🔔 Get 24hr Brief</button>` : ""}
-        </div>`;
-    }).join("");
-  } catch(e) {
-    document.getElementById("hearingsList").innerHTML =
-      "<p style='color:var(--dim);padding:12px;font-size:13px'>Could not load hearings.</p>";
-  }
-}
-
-async function get24hrBrief(hearingTitle, caseId) {
-  const btn = event.target;
-  btn.textContent = "Generating brief...";
-  btn.disabled = true;
-
-  const analysis = caseId ? getCaseAnalysis(caseId) : null;
-  const query = `Generate a 24-hour hearing preparation brief for:
-Hearing: ${hearingTitle}
-${analysis ? `Case Analysis: ${analysis.analysis}` : ""}
-
-Include:
-1. Documents to bring (checklist)
-2. Key legal points to argue
-3. Last-minute preparation steps
-4. What NOT to forget`;
-
-  try {
-    const res  = await fetch(`${API}/chat/query`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query })
-    });
-    const data = await res.json();
-
-    showAnalysisModal({
-      title: `24hr Brief: ${hearingTitle}`,
-      analysis: data.response,
-      confidence: data.confidence,
-      analysedAt: new Date().toISOString()
-    });
-  } catch(e) {
-    alert("Could not generate brief.");
-  }
-
-  btn.textContent = "🔔 Get 24hr Brief";
-  btn.disabled = false;
-}
-
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // DOCUMENTS
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 async function uploadDocument() {
   const file = document.getElementById("docFile").files[0];
   if (!file) return;
@@ -455,7 +447,6 @@ async function uploadDocument() {
     form.append("file", file);
     const res  = await fetch(`${API}/documents/analyze`, { method: "POST", body: form });
     const data = await res.json();
-
     resultEl.textContent =
       `📄 File: ${data.filename}\n📊 Confidence: ${data.confidence}%\n\n${data.analysis}` +
       (data.warning ? `\n\n⚠️ Warning: ${data.warning}` : "");
@@ -474,9 +465,9 @@ function handleDrop(event) {
   }
 }
 
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // NOTIFICATIONS
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 function addNotification(notif) {
   notifications.unshift({ ...notif, id: Date.now() });
   updateNotifBadge();
@@ -509,54 +500,59 @@ function renderNotifications() {
     return;
   }
   list.innerHTML = notifications.map(n => `
-    <div class="notif-item ${n.type === 'urgent' ? 'urgent' : ''}">
+    <div class="notif-item ${n.type === 'urgent' ? 'urgent' : n.type === 'success' ? 'success' : ''}">
       <div class="notif-title">${n.title}</div>
       <div class="notif-body">${n.body}</div>
       <div class="notif-time">${new Date(n.time).toLocaleString()}</div>
     </div>`).join("");
 }
 
-// ─────────────────────────────────────────────────────
-// 24HR HEARING CHECKER (runs every 5 minutes)
-// ─────────────────────────────────────────────────────
-async function checkUpcomingHearings() {
-  try {
-    const res      = await fetch(`${API}/hearings/`);
-    const hearings = await res.json();
-    const now      = new Date();
+// ─────────────────────────────────────────
+// 24HR ALERT SYSTEM
+// ─────────────────────────────────────────
+function scheduleHearingAlert(caseData) {
+  if (!caseData.hearingDate) return;
+  const hDate   = new Date(caseData.hearingDate);
+  const now     = new Date();
+  const diffMs  = hDate - now;
+  const alertAt = diffMs - (24 * 60 * 60 * 1000); // 24hrs before
 
-    hearings.forEach(h => {
-      const hDate     = new Date(h.hearing_date);
-      const diffMs    = hDate - now;
-      const diffHours = diffMs / (1000 * 60 * 60);
-      const storageKey = `notified_${h.id}`;
-
-      if (diffHours > 0 && diffHours <= 24 && !sessionStorage.getItem(storageKey)) {
-        sessionStorage.setItem(storageKey, "1");
-        const analysis = h.case_id ? getCaseAnalysis(h.case_id) : null;
-
-        addNotification({
-          type: "urgent",
-          title: `🚨 Hearing in ${Math.round(diffHours)}hrs: ${h.title}`,
-          body: analysis
-            ? `Key points ready. Court: ${h.court || "TBD"}. Tap 'Get 24hr Brief' for full prep.`
-            : `Court: ${h.court || "TBD"}. Register your case for AI-generated prep checklist.`,
-          time: new Date()
-        });
-      }
-    });
-  } catch(e) {
-    // Backend not available, skip silently
+  if (alertAt > 0) {
+    setTimeout(() => fireHearingAlert(caseData), alertAt);
+  } else if (diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000) {
+    // Already within 24hrs window, alert now
+    fireHearingAlert(caseData);
   }
 }
 
-// ─────────────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────────────
-checkUpcomingHearings();
-hearingCheckInterval = setInterval(checkUpcomingHearings, 5 * 60 * 1000); // every 5 min
+function fireHearingAlert(caseData) {
+  const storageKey = `alerted_${caseData.id}_${caseData.hearingDate}`;
+  if (sessionStorage.getItem(storageKey)) return;
+  sessionStorage.setItem(storageKey, "1");
 
-// Close modal on backdrop click
+  addNotification({
+    type: "urgent",
+    title: `🚨 Hearing in < 24hrs — ${caseData.title}`,
+    body: `📅 ${new Date(caseData.hearingDate).toLocaleString()}${caseData.court ? ` | 🏛 ${caseData.court}` : ""}\nOpen case to get your 24hr preparation brief.`,
+    time: new Date()
+  });
+
+  loadCases(); // refresh to show urgent badge
+}
+
+// ─────────────────────────────────────────
+// BOOT — check existing cases on load
+// ─────────────────────────────────────────
+function bootHearingChecks() {
+  const all = getLocalCases();
+  Object.values(all).forEach(c => {
+    if (c.hearingDate) scheduleHearingAlert(c);
+  });
+}
+
+// Modal backdrop close
 document.getElementById("analysisModal").addEventListener("click", function(e) {
   if (e.target === this) closeModal();
 });
+
+bootHearingChecks();
