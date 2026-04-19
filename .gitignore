@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+
+# Environment — NEVER commit this
+.env
+
+# Database files
+*.db
+*.sqlite3
+
+# Frontend dependencies — NEVER commit these
+node_modules/
+frontend/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+*.egg-info/
