@@ -33,3 +33,5 @@ dist/
 .env
 backend/.env
 .env
+backend/.env
+.env
